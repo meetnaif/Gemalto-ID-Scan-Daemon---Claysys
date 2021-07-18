@@ -28,7 +28,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
             // Initialization.
             var DBAPIURL = ConfigurationManager.AppSettings.Get("DBAPI_Url");
             var DBAPICLIENTID = ConfigurationManager.AppSettings.Get("DBAPI_ClientID");
-            var DBAPICLIENTSECRET = ConfigurationManager.AppSettings.Get("DBAPI_ClientSecret");
+            var DBAPICLIENTSECRET = Decryptor.DecryptText(ConfigurationManager.AppSettings.Get("DBAPI_ClientSecret"));
             string responseObj = string.Empty;
             ScannerResponse scannerResponse = new ScannerResponse();
 

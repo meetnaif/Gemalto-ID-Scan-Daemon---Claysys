@@ -28,7 +28,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
         /// <returns>Status JSON response along with Id, status and Description</returns>
         public string GetScannedData() 
         {
-            System.Diagnostics.Debugger.Launch();
+            //System.Diagnostics.Debugger.Launch();
             Log.Information("GetScannedData API Called.");
             ScannerResponse resp = new ScannerResponse() { Status = "", Description = "", Id = null};
             try

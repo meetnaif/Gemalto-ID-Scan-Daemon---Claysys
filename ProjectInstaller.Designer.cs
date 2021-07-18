@@ -40,7 +40,9 @@
             // 
             // GemaltoIDScanDaemon
             // 
+            this.GemaltoIDScanDaemon.Description = "Service to retrieve data from ID cards using Gemalto Scanner";
             this.GemaltoIDScanDaemon.ServiceName = "Gemalto IDScan Daemon: Claysys";
+            this.GemaltoIDScanDaemon.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
             // 
             // ProjectInstaller
             // 

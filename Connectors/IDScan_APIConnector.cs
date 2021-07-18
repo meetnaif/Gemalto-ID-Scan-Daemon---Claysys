@@ -16,7 +16,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
             Log.Information("ID Scan API called.");
             var emptyresponse = "{\"ParseImageResult\":{\"DriverLicense\":null,\"ErrorMessage\":\"Cannot Parse ID\",\"Reference\":null,\"Success\":false,\"ValidationCode\":null}}";
             var APIURL = ConfigurationManager.AppSettings.Get("IDScan_LicenseParseAPI_URL");
-            var AuthKey = ConfigurationManager.AppSettings.Get("AuthKey");
+            var AuthKey = Decryptor.DecryptText(ConfigurationManager.AppSettings.Get("AuthKey"));
             var client = new RestClient(APIURL);
             try
             {
