@@ -1,10 +1,12 @@
 ﻿using Gemalto_ID_Scan_Daemon___Claysys.Model;
 using ManageMeeting.Models;
 using Newtonsoft.Json;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -22,12 +24,14 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
     {
         public static ScannerResponse GetAuthorizeToken(DrivingLicense.Root obj, IDCardImage card)
         {
+            Log.Information("Initializing API connection to Database.");
             // Initialization.
             var DBAPIURL = ConfigurationManager.AppSettings.Get("DBAPI_Url");
             var DBAPICLIENTID = ConfigurationManager.AppSettings.Get("DBAPI_ClientID");
             var DBAPICLIENTSECRET = ConfigurationManager.AppSettings.Get("DBAPI_ClientSecret");
             string responseObj = string.Empty;
             ScannerResponse scannerResponse = new ScannerResponse();
+
             try
             {
                 // Posting.  
@@ -36,15 +40,17 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                     // Setting Base address.  
                     client.BaseAddress = new Uri(DBAPIURL);
                     TokenRequest scanInfo = new TokenRequest() { ClientId = DBAPICLIENTID, ClientSecret = DBAPICLIENTSECRET };
+                    ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
 
                     var response = client.PostAsJsonAsync("api/Connect/GenerateToken", scanInfo).Result;
                     response.EnsureSuccessStatusCode();
+                    Log.Information("Connected API to Database Successfully.");
                     string result = response.Content.ReadAsStringAsync().Result;
                     AutharizedResponse<TokenResponse> tokenResponse = JsonConvert.DeserializeObject<AutharizedResponse<TokenResponse>>(result);
                     if (tokenResponse.StatusCode == "500")
                     {
                         scannerResponse = new ScannerResponse() { Status = "Error", Description = tokenResponse.ErrorMessage };
-                        //Log Eroor
+                        Log.Error("API to database connection resulted in 500 error.");
                     }
                     else
                     {
@@ -63,14 +69,15 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                             DOB = DateTime.Parse(obj.ParseImageResult.DriverLicense.Birthdate),
                             IssueDate = DateTime.Parse(obj.ParseImageResult.DriverLicense.IssueDate),
                             StateOfIssue = obj.ParseImageResult.DriverLicense.IssuedBy,
-                            ExpDate = obj.ParseImageResult.DriverLicense.ExpirationDate,
+                            ExpDate = DateTime.Parse(obj.ParseImageResult.DriverLicense.ExpirationDate),
                             JumioRefID = obj.ParseImageResult.Reference,
                             ScanInfo = "Gemalto Scanner",
                             CreatedBy = Environment.UserName,
-                            CreatedOn = DateTime.Now.ToString(),
+                            CreatedOn = DateTime.Now,
                             AppFormID = null,
                             ImageName = obj.ParseImageResult.DriverLicense.DocumentType+ "_" +obj.ParseImageResult.Reference,
                             IDNumber = obj.ParseImageResult.DriverLicense.LicenseNumber,
+                            Zip = obj.ParseImageResult.DriverLicense.PostalCode,
                             City = obj.ParseImageResult.DriverLicense.City
                         };
                         response = client.PostAsJsonAsync("api/Connect/InsertScannerInfo", scannerInfoRequest).Result;
@@ -94,11 +101,9 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
             catch (Exception ex)
             {
                 scannerResponse = new ScannerResponse() { Status = "Error", Description = ex.Message };
-                //Log Eroor
+                Log.Error(ex, "Error");
                 throw ex;
             }
-
-
 
             return scannerResponse;
         }

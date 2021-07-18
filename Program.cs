@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.Hosting;
 
 namespace Gemalto_ID_Scan_Daemon___Claysys
 {
@@ -14,12 +16,28 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
         /// </summary>
         static void Main()
         {
-            ServiceBase[] ServicesToRun;
-            ServicesToRun = new ServiceBase[]
+            Log.Logger = new LoggerConfiguration()
+           .WriteTo.File(@"C:\Logs\IDScan Log.log", rollingInterval: RollingInterval.Day)
+           .CreateLogger();
+
+            try
             {
+                ServiceBase[] ServicesToRun;
+                ServicesToRun = new ServiceBase[]
+                {
                 new SelfHostService()
-            };
-            ServiceBase.Run(ServicesToRun);
+                };
+                ServiceBase.Run(ServicesToRun);
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, ex.Message);
+                throw;
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
         }
     }
 }

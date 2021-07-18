@@ -7,106 +7,141 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Gemalto_ID_Scan_Daemon___Claysys.Model;
+using Serilog;
 
 namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
 {
     public class Gemalto_SDKConnector
     {
+
         public static void Initialise()
         {
-
-            MMM.Readers.FullPage.Reader.EnableLogging(
-                true,
-                3,
-                -1,
-                "ClasysTestApp.log"
-            );
-
-            MMM.Readers.ErrorCode result = MMM.Readers.FullPage.Reader.Initialise(
-                null,
-                null,
-                null,
-                null,
-                true,
-                false
-            );
-
-            if (result != MMM.Readers.ErrorCode.NO_ERROR_OCCURRED)
+            try
             {
+                MMM.Readers.FullPage.Reader.EnableLogging(
+                    true,
+                    3,
+                    -1,
+                    "ClasysTestApp.log"
+                );
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error");
+            }
 
-                Console.WriteLine("An error occured during initialisation - {0}");
+            try
+            {
+                Log.Information("Gemalto Scanner Initialization.");
+
+                MMM.Readers.ErrorCode result = MMM.Readers.FullPage.Reader.Initialise(
+                    null,
+                    null,
+                    null,
+                    null,
+                    true,
+                    false
+                );
+
+                if (result != MMM.Readers.ErrorCode.NO_ERROR_OCCURRED)
+                {
+                    Log.Error("An error occured during initialisation - {0}");
+                }
+                Log.Information("Gemalto Scanner Initialized.");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error");
+
             }
 
         }
 
         public static void WaitForDocument()
         {
-            MMM.Readers.ErrorCode result =
-                MMM.Readers.FullPage.Reader.WaitForDocumentOnWindow(10000);
+            try
+            {
+                Log.Information("Gemalto Scanner waiting for Document.");
+                MMM.Readers.ErrorCode result =
+                    MMM.Readers.FullPage.Reader.WaitForDocumentOnWindow(50000);
 
-            if (result == MMM.Readers.ErrorCode.NO_ERROR_OCCURRED)
-            {
-                Console.WriteLine("Found a document");
+                if (result == MMM.Readers.ErrorCode.NO_ERROR_OCCURRED)
+                {
+                    Log.Information("Found a document.");
+                }
+                else if (result == MMM.Readers.ErrorCode.ERROR_TIMED_OUT)
+                {
+                    Log.Information("Timed out waiting for document.");
+                }
+                else
+                {
+                    Log.Error("An error occured - {0}");
+                }
+                Log.Information("Gemalto Scanner completed scanning.");
             }
-            else if (result == MMM.Readers.ErrorCode.ERROR_TIMED_OUT)
+            catch (Exception ex)
             {
-                Console.WriteLine("Timed out waiting for document");
-            }
-            else
-            {
-                Console.WriteLine("An error occured - {0}");
+                Log.Error(ex, "Error");
             }
         }
 
         public static Model.IDCardImage ReadDocument()
         {
             IDCardImage card = new Model.IDCardImage();
-
-            MMM.Readers.ErrorCode result = MMM.Readers.FullPage.Reader.ReadDocument();
-            if (result != MMM.Readers.ErrorCode.NO_ERROR_OCCURRED)
+            try
             {
-                Console.WriteLine("An error occurred reading the document - {0}");
+                Log.Information("Gemalto Scanner reading document Data.");
+                MMM.Readers.ErrorCode result = MMM.Readers.FullPage.Reader.ReadDocument();
+                if (result != MMM.Readers.ErrorCode.NO_ERROR_OCCURRED)
+                {
+                    Log.Error("An error occurred reading the document - {0}");
+                }
+                else
+                {
+                    object data = null;
+
+                    result = MMM.Readers.FullPage.Reader.GetData(
+                        MMM.Readers.FullPage.DataType.CD_IMAGEVIS,
+                        ref data
+                    );
+
+
+                    if (result == MMM.Readers.ErrorCode.NO_ERROR_OCCURRED)
+                    {
+                        try
+                        {
+                            card.ImageFront = ToBase64String((Bitmap)data, ImageFormat.Jpeg);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, "Error");
+                        }
+                    }
+
+                    result = MMM.Readers.FullPage.Reader.GetData(
+                        MMM.Readers.FullPage.DataType.CD_IMAGEVISREAR,
+                        ref data
+                    );
+
+
+                    if (result == MMM.Readers.ErrorCode.NO_ERROR_OCCURRED)
+                    {
+                        try
+                        {
+                            card.ImageBack = ToBase64String((Bitmap)data, ImageFormat.Jpeg);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, "Error");
+                        }
+                    }
+
+                }
+                Log.Information("Gemalto Scanner completed reading data.");
             }
-            else
+            catch(Exception ex)
             {
-                object data = null;
-
-                result = MMM.Readers.FullPage.Reader.GetData(
-                    MMM.Readers.FullPage.DataType.CD_IMAGEVIS,
-                    ref data
-                );
-
-
-                if (result == MMM.Readers.ErrorCode.NO_ERROR_OCCURRED)
-                {
-                    try
-                    {
-                        card.ImageFront = ToBase64String((Bitmap)data, ImageFormat.Jpeg);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
-                }
-
-                result = MMM.Readers.FullPage.Reader.GetData(
-                    MMM.Readers.FullPage.DataType.CD_IMAGEVISREAR,
-                    ref data
-                );
-
-
-                if (result == MMM.Readers.ErrorCode.NO_ERROR_OCCURRED)
-                {
-                    try
-                    {
-                        card.ImageBack = ToBase64String((Bitmap)data, ImageFormat.Jpeg);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
-                }
-
+                Log.Error(ex, "Error");
             }
 
             return card;
@@ -114,7 +149,15 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
 
         public static void Shutdown()
         {
-            MMM.Readers.FullPage.Reader.Shutdown();
+            try
+            {
+                Log.Information("Gemalto Scanner Shutdown.");
+                MMM.Readers.FullPage.Reader.Shutdown();
+            }
+            catch(Exception ex)
+            {
+                Log.Error(ex, "Error");
+            }
 
         }
 
@@ -122,22 +165,23 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
         {
             string base64String = string.Empty;
 
+            try
+            {
+                MemoryStream memoryStream = new MemoryStream();
+                bmp.Save(memoryStream, imageFormat);
 
-            MemoryStream memoryStream = new MemoryStream();
-            bmp.Save(memoryStream, imageFormat);
+                memoryStream.Position = 0;
+                byte[] byteBuffer = memoryStream.ToArray();
 
+                memoryStream.Close();
 
-            memoryStream.Position = 0;
-            byte[] byteBuffer = memoryStream.ToArray();
-
-
-            memoryStream.Close();
-
-
-            base64String = Convert.ToBase64String(byteBuffer);
-            byteBuffer = null;
-
-
+                base64String = Convert.ToBase64String(byteBuffer);
+                byteBuffer = null;
+            }
+            catch(Exception ex)
+            {
+                Log.Error(ex, "Error");
+            }
             return base64String;
         }
     }
