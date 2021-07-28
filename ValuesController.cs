@@ -30,7 +30,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
         {
             //System.Diagnostics.Debugger.Launch();
             Log.Information("GetScannedData API Called.");
-            ScannerResponse resp = new ScannerResponse() { Status = "", Description = "", Id = null};
+            ScannerResponse resp = new ScannerResponse() { Status = "Error", Description = "Error occured", Id = null};
             try
             {
                 if (Gemalto_ScanIDCard())
@@ -42,12 +42,12 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
                     }
                     else
                     {
-                        resp = new ScannerResponse() { Status = "Fail", Description = "Cannot Parse ID", Id = null };
+                        resp = new ScannerResponse() { Status = "Error", Description = "Cannot Parse ID", Id = null };
                     }
                 }
                 else
                 {
-                    resp = new ScannerResponse() { Status = "Fail", Description = "Cannot initiate Scanner", Id = null };
+                    resp = new ScannerResponse() { Status = "Error", Description = "Cannot initiate Scanner", Id = null };
                 }
             }
             catch(Exception ex)
