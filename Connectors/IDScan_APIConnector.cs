@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System.Configuration;
 using RestSharp;
 using Serilog;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
 {
@@ -13,30 +15,53 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
     {
         public static string IDScanAPI(string Base64Bitmap)
         {
+            //ServicePointManager.ServerCertificateValidationCallback +=(sender, certificate, chain, sslPolicyErrors) => true;
+            //System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
             Log.Information("ID Scan API called.");
             var emptyresponse = "{\"ParseImageResult\":{\"DriverLicense\":null,\"ErrorMessage\":\"Cannot Parse ID\",\"Reference\":null,\"Success\":false,\"ValidationCode\":null}}";
             var APIURL = ConfigurationManager.AppSettings.Get("IDScan_LicenseParseAPI_URL");
             var AuthKey = Decryptor.DecryptText(ConfigurationManager.AppSettings.Get("AuthKey"));
             var client = new RestClient(APIURL);
+            //client.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
             try
             {
-                client.Timeout = -1;
+                client.Timeout = 50000;
                 var request = new RestRequest(Method.POST);
                 request.AddHeader("Content-Type", "application/json");
-                request.AddHeader("Cookie", "ASP.NET_SessionId=py0xanna1ijnv5tl1sxng11f");
                 var body = @"{""authKey"":""AUTH_KEY"",""data"":""REQ_BODY""} ";
                 body = body.Replace("AUTH_KEY", AuthKey).Replace("REQ_BODY", Base64Bitmap);
+                //Log.Information(body);
                 request.AddParameter("application/json", body, ParameterType.RequestBody);
                 IRestResponse response = client.Execute(request);
-                if(response.StatusCode.ToString() == "500")
+                if ((int)response.StatusCode == 500)
                 {
                     Log.Information("IDScan API call failed.");
                     return emptyresponse;
                 }
+                //Log.Information("API Response Content");
+                //Log.Information(Convert.ToString(response.Content));
+                Log.Information("API Status");
+                Log.Information(Convert.ToString(response.StatusCode));
+                Log.Information("API Status Description");
+                Log.Information(Convert.ToString(response.StatusDescription));
+                Log.Information("API Headers");
+                Log.Information(Convert.ToString(response.Headers));
+                Log.Information("API Error Exception");
+                Log.Information(Convert.ToString(response.ErrorException));
+                Log.Information("API Error Message");
+                Log.Information(Convert.ToString(response.ErrorMessage));
+                Log.Information("API Protocol Version");
+                Log.Information(Convert.ToString(response.ProtocolVersion));
+                Log.Information("API Request");
+                Log.Information(Convert.ToString(response.Request));
+                Log.Information("API Response Status");
+                Log.Information(Convert.ToString(response.ResponseStatus));
+                Log.Information("API Server");
+                Log.Information(Convert.ToString(response.Server));
                 Log.Information("IDScan API call completed.");
                 return response.Content;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Log.Error(ex, "Error");
             }

@@ -51,6 +51,8 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                     if (tokenResponse.StatusCode == "500")
                     {
                         scannerResponse = new ScannerResponse() { Status = "Error", Description = tokenResponse.ErrorMessage };
+                        Log.Information(tokenResponse.ErrorMessage);
+                        Log.Information(tokenResponse.Data.Result);
                         Log.Error("API to database connection resulted in 500 error.");
                     }
                     else
@@ -64,8 +66,8 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                             LName = obj.ParseImageResult.DriverLicense.LastName,
                             SA1 = obj.ParseImageResult.DriverLicense.Address1,
                             SA2 = obj.ParseImageResult.DriverLicense.Address2,
-                            BackImage = card.ImageBack,
-                            FrontImage = card.ImageFront,
+                            BackImage = card.ImageFront,
+                            FrontImage = card.ImageBack,
                             Gender = obj.ParseImageResult.DriverLicense.Gender,
                             DOB = DateTime.Parse(obj.ParseImageResult.DriverLicense.Birthdate),
                             IssueDate = DateTime.Parse(obj.ParseImageResult.DriverLicense.IssueDate),
@@ -87,11 +89,17 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                         APIResponseData<ScannerInfoResponse> scannerInfoResponse = JsonConvert.DeserializeObject<APIResponseData<ScannerInfoResponse>>(result);
                         if (scannerInfoResponse.StatusCode == "500")
                         {
+                            Log.Information("DB Connection resulted in 500 error.");
+                            Log.Information(scannerInfoResponse.ErrorMessage);
+                            Log.Information(scannerInfoResponse.Data.Result);
                             scannerResponse = new ScannerResponse() { Status = "Error", Description = scannerInfoResponse.ErrorMessage };
 
                         }
                         else
                         {
+                            Log.Information("DB Connection resulted in a successful record entry.");
+                            Log.Information(scannerInfoResponse.ErrorMessage);
+                            Log.Information(scannerInfoResponse.Data.Result);
                             scannerResponse = new ScannerResponse() { Status = "success", Id = scannerInfoResponse.Data.Id };
 
                         }

@@ -22,7 +22,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                     true,
                     3,
                     -1,
-                    "ClasysTestApp.log"
+                    "ClasysGemaltoService.log"
                 );
             }
             catch (Exception ex)
@@ -111,6 +111,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                         try
                         {
                             card.ImageFront = ToBase64String((Bitmap)data, ImageFormat.Jpeg);
+                            //SaveImage((Bitmap)data);//only for test
                         }
                         catch (Exception ex)
                         {
@@ -129,6 +130,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                         try
                         {
                             card.ImageBack = ToBase64String((Bitmap)data, ImageFormat.Jpeg);
+                            //SaveImage((Bitmap)data);//only for test
                         }
                         catch (Exception ex)
                         {
@@ -183,6 +185,24 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                 Log.Error(ex, "Error");
             }
             return base64String;
+        }
+        public static void SaveImage(Bitmap bmp)
+        {
+            
+            string path = "C:\\" + Guid.NewGuid()+".jpg";
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+            try
+            {
+                bmp.Save(path, System.Drawing.Imaging.ImageFormat.Jpeg);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "SaveError");
+                throw ex;
+            }
         }
     }
 }

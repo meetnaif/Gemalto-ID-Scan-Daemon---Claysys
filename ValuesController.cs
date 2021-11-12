@@ -15,7 +15,7 @@ using System.Web.Hosting;
 
 namespace Gemalto_ID_Scan_Daemon___Claysys
 {
-    
+
     public class ValuesController : ApiController
     {
         public static IDCardImage card;
@@ -26,11 +26,16 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
         /// GetScannedData updates DB with Scanned ID data from the Scanner
         /// </summary>
         /// <returns>Status JSON response along with Id, status and Description</returns>
-        public string GetScannedData() 
+        public string GetScannedData()
         {
+            //Initializing static variables
+            card = null;
+            deserializedObj = null;
+            IsSuccess = false;
+
             //System.Diagnostics.Debugger.Launch();
             Log.Information("GetScannedData API Called.");
-            ScannerResponse resp = new ScannerResponse() { Status = "Error", Description = "Error occured", Id = null};
+            ScannerResponse resp = new ScannerResponse() { Status = "Error", Description = "Error occured", Id = null };
             try
             {
                 if (Gemalto_ScanIDCard())
@@ -38,25 +43,28 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
                     IDScanAPICall();
                     if (IsSuccess)
                     {
+                        Log.Information("IDScan API parsed the ID.");
                         resp = DBConnector.GetAuthorizeToken(deserializedObj, card);
                     }
                     else
                     {
+                        Log.Information("IDScan API could not parse the ID.");
                         resp = new ScannerResponse() { Status = "Error", Description = "Cannot Parse ID", Id = null };
                     }
                 }
                 else
                 {
+                    Log.Information("Could not initiate Gemalto Scanner.");
                     resp = new ScannerResponse() { Status = "Error", Description = "Cannot initiate Scanner", Id = null };
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Log.Error(ex, "Error");
             }
             string output = JsonConvert.SerializeObject(resp);
             return output;
-            
+
         }
 
         /// <summary>
@@ -97,7 +105,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
         /// </summary>
         public static void IDScanAPICall()
         {
-            
+            string tempimage = String.Empty;
             string resp = String.Empty;
             try
             {
@@ -108,18 +116,24 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
                 {
                     resp = IDScan_APIConnector.IDScanAPI(card.ImageBack); //checking Back side image for data if Front side image cant be parsed
                     IsSuccess = CheckForSuccess(resp);
+                    if (IsSuccess)
+                    {
+                        tempimage = card.ImageFront;
+                        card.ImageFront = card.ImageBack;
+                        card.ImageBack = tempimage;
+                    }
                 }
-                
+
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Error");
             }
             deserializedObj = JsonConvert.DeserializeObject<DrivingLicense.Root>(resp);
-            
+
         }
 
-        
+
 
     }
 }
