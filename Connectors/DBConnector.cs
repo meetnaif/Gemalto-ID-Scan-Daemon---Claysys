@@ -48,6 +48,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                     Log.Information("Connected API to Database Successfully.");
                     string result = response.Content.ReadAsStringAsync().Result;
                     AutharizedResponse<TokenResponse> tokenResponse = JsonConvert.DeserializeObject<AutharizedResponse<TokenResponse>>(result);
+
                     if (tokenResponse.StatusCode == "500")
                     {
                         scannerResponse = new ScannerResponse() { Status = "Error", Description = tokenResponse.ErrorMessage };
@@ -59,7 +60,8 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                     {
                         client.DefaultRequestHeaders.Authorization
                          = new AuthenticationHeaderValue("Bearer", tokenResponse.Data.Token);
-                        ScannerInfoRequest scannerInfoRequest = new ScannerInfoRequest() {
+                        ScannerInfoRequest scannerInfoRequest = new ScannerInfoRequest()
+                        {
                             IDType = obj.ParseImageResult.DriverLicense.DocumentType,
                             FName = obj.ParseImageResult.DriverLicense.FirstName,
                             MName = obj.ParseImageResult.DriverLicense.MiddleName,
@@ -69,16 +71,16 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                             BackImage = card.ImageFront,
                             FrontImage = card.ImageBack,
                             Gender = obj.ParseImageResult.DriverLicense.Gender,
-                            DOB = DateTime.Parse(obj.ParseImageResult.DriverLicense.Birthdate),
-                            IssueDate = DateTime.Parse(obj.ParseImageResult.DriverLicense.IssueDate),
+                            DOB = (String.IsNullOrEmpty(obj.ParseImageResult.DriverLicense.Birthdate) ? new DateTime() : DateTime.Parse(obj.ParseImageResult.DriverLicense.Birthdate)),
+                            IssueDate = (String.IsNullOrEmpty(obj.ParseImageResult.DriverLicense.IssueDate)? new DateTime():DateTime.Parse(obj.ParseImageResult.DriverLicense.IssueDate)),
                             StateOfIssue = obj.ParseImageResult.DriverLicense.IssuedBy,
-                            ExpDate = DateTime.Parse(obj.ParseImageResult.DriverLicense.ExpirationDate),
+                            ExpDate =(String.IsNullOrEmpty(obj.ParseImageResult.DriverLicense.ExpirationDate)?new DateTime() : DateTime.Parse(obj.ParseImageResult.DriverLicense.ExpirationDate)),
                             JumioRefID = obj.ParseImageResult.Reference,
                             ScanInfo = "Gemalto Scanner",
                             CreatedBy = Environment.UserName,
                             CreatedOn = DateTime.Now,
                             AppFormID = null,
-                            ImageName = obj.ParseImageResult.DriverLicense.DocumentType+ "_" +obj.ParseImageResult.Reference,
+                            ImageName = obj.ParseImageResult.DriverLicense.DocumentType + "_" + obj.ParseImageResult.Reference,
                             IDNumber = obj.ParseImageResult.DriverLicense.LicenseNumber,
                             Zip = obj.ParseImageResult.DriverLicense.PostalCode,
                             City = obj.ParseImageResult.DriverLicense.City
@@ -115,6 +117,11 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
             }
 
             return scannerResponse;
+        }
+
+        public static bool CheckDriverLicense(DrivingLicense.Root obj)
+        {
+            return String.IsNullOrEmpty(obj.ParseImageResult.DriverLicense.IssueDate);
         }
     }
 
