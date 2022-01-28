@@ -76,7 +76,26 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
         public static bool CheckForSuccess(string JSONResponse)
         {
             DrivingLicense.Root deserialize = JsonConvert.DeserializeObject<DrivingLicense.Root>(JSONResponse);
-            return deserialize.ParseImageResult.Success;
+
+            if (deserialize.ParseImageResult.Confidence == 0)
+            {
+                return false;
+            }
+            else if (deserialize.ParseImageResult.Confidence == 100)
+            {
+                return true;
+            }
+            else
+            {
+                if (deserialize.ParseImageResult.ValidationCode.IsValid)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
         }
 
         /// Gemalto_ScanIDCard Initialises, Scan and Shutdown the Gemalto Scanner
@@ -109,18 +128,23 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
             string resp = String.Empty;
             try
             {
-                resp = IDScan_APIConnector.IDScanAPI(card.ImageFront); //checking Front side image for data
-                //resp = File.ReadAllText("C:\\Users\\naif\\Desktop\\response.txt");    //for test
+                resp = IDScan_APIConnector.IDScanAPI(card.ImageFront);
                 IsSuccess = CheckForSuccess(resp);
-                if (!IsSuccess)
+                if (IsSuccess)
+                {
+                    tempimage = card.ImageFront;
+                    card.ImageFront = card.ImageBack;
+                    card.ImageBack = tempimage;
+
+                    deserializedObj = JsonConvert.DeserializeObject<DrivingLicense.Root>(resp);
+                }
+                else
                 {
                     resp = IDScan_APIConnector.IDScanAPI(card.ImageBack); //checking Back side image for data if Front side image cant be parsed
                     IsSuccess = CheckForSuccess(resp);
                     if (IsSuccess)
                     {
-                        tempimage = card.ImageFront;
-                        card.ImageFront = card.ImageBack;
-                        card.ImageBack = tempimage;
+                        deserializedObj = JsonConvert.DeserializeObject<DrivingLicense.Root>(resp);
                     }
                 }
 
@@ -129,7 +153,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
             {
                 Log.Error(ex, "Error");
             }
-            deserializedObj = JsonConvert.DeserializeObject<DrivingLicense.Root>(resp);
+            
 
         }
 

@@ -35,6 +35,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
 
             try
             {
+                //LogID(obj);
                 // Posting.  
                 using (var client = new HttpClient())
                 {
@@ -68,8 +69,8 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                             LName = obj.ParseImageResult.DriverLicense.LastName,
                             SA1 = obj.ParseImageResult.DriverLicense.Address1,
                             SA2 = obj.ParseImageResult.DriverLicense.Address2,
-                            BackImage = card.ImageFront,
-                            FrontImage = card.ImageBack,
+                            BackImage = card.ImageBack,
+                            FrontImage = card.ImageFront,
                             Gender = obj.ParseImageResult.DriverLicense.Gender,
                             DOB = (String.IsNullOrEmpty(obj.ParseImageResult.DriverLicense.Birthdate) ? new DateTime() : DateTime.Parse(obj.ParseImageResult.DriverLicense.Birthdate)),
                             IssueDate = (String.IsNullOrEmpty(obj.ParseImageResult.DriverLicense.IssueDate)? new DateTime():DateTime.Parse(obj.ParseImageResult.DriverLicense.IssueDate)),
@@ -119,9 +120,14 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
             return scannerResponse;
         }
 
-        public static bool CheckDriverLicense(DrivingLicense.Root obj)
+        public static void LogID(DrivingLicense.Root obj)
         {
-            return String.IsNullOrEmpty(obj.ParseImageResult.DriverLicense.IssueDate);
+            Log.Information(obj.ParseImageResult.DriverLicense.FirstName);
+            Log.Information(obj.ParseImageResult.DriverLicense.LastName);
+            Log.Information(obj.ParseImageResult.DriverLicense.LicenseNumber);
+            Log.Information(obj.ParseImageResult.DriverLicense.FullName);
+            
+
         }
     }
 

@@ -30,7 +30,9 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                 request.AddHeader("Content-Type", "application/json");
                 var body = @"{""authKey"":""AUTH_KEY"",""data"":""REQ_BODY""} ";
                 body = body.Replace("AUTH_KEY", AuthKey).Replace("REQ_BODY", Base64Bitmap);
+                //Log.Information("*****");
                 //Log.Information(body);
+                //Log.Information("*****");
                 request.AddParameter("application/json", body, ParameterType.RequestBody);
                 IRestResponse response = client.Execute(request);
                 if ((int)response.StatusCode == 500)
@@ -38,8 +40,8 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Connectors
                     Log.Information("IDScan API call failed.");
                     return emptyresponse;
                 }
-                //Log.Information("API Response Content");
-                //Log.Information(Convert.ToString(response.Content));
+                Log.Information("API Response Content");
+                Log.Information(Convert.ToString(response.Content));
                 Log.Information("API Status");
                 Log.Information(Convert.ToString(response.StatusCode));
                 Log.Information("API Status Description");
