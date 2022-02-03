@@ -76,26 +76,40 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
         public static bool CheckForSuccess(string JSONResponse)
         {
             DrivingLicense.Root deserialize = JsonConvert.DeserializeObject<DrivingLicense.Root>(JSONResponse);
-
-            if (deserialize.ParseImageResult.Confidence == 0)
+            try
             {
-                return false;
-            }
-            else if (deserialize.ParseImageResult.Confidence == 100)
-            {
-                return true;
-            }
-            else
-            {
-                if (deserialize.ParseImageResult.ValidationCode.IsValid)
-                {
-                    return true;
-                }
-                else
+                if (String.IsNullOrEmpty(deserialize.ParseImageResult.DriverLicense.FirstName.Trim()))
                 {
                     return false;
                 }
+                else
+                {
+                    return true;
+                }
             }
+            catch(Exception e)
+            {
+                return false;
+            }
+            //if (deserialize.ParseImageResult.Confidence == 0)
+            //{
+            //    return false;
+            //}
+            //else if (deserialize.ParseImageResult.Confidence == 100)
+            //{
+            //    return true;
+            //}
+            //else
+            //{
+            //    if (deserialize.ParseImageResult.ValidationCode.IsValid)
+            //    {
+            //        return true;
+            //    }
+            //    else
+            //    {
+            //        return false;
+            //    }
+            //}
         }
 
         /// Gemalto_ScanIDCard Initialises, Scan and Shutdown the Gemalto Scanner
@@ -132,6 +146,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
                 IsSuccess = CheckForSuccess(resp);
                 if (IsSuccess)
                 {
+                    //Log.Information("Front Image : Barcode");
                     tempimage = card.ImageFront;
                     card.ImageFront = card.ImageBack;
                     card.ImageBack = tempimage;
@@ -140,6 +155,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
                 }
                 else
                 {
+                    //Log.Information("Rear Image: Barcode");
                     resp = IDScan_APIConnector.IDScanAPI(card.ImageBack); //checking Back side image for data if Front side image cant be parsed
                     IsSuccess = CheckForSuccess(resp);
                     if (IsSuccess)
@@ -153,7 +169,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys
             {
                 Log.Error(ex, "Error");
             }
-            
+
 
         }
 

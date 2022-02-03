@@ -61,7 +61,7 @@ namespace Gemalto_ID_Scan_Daemon___Claysys.Model
 
         public class ParseImageResult
         {
-            public int Confidence { get; set; }
+            //public int Confidence { get; set; }
             public DriverLicense DriverLicense { get; set; }
             public string ErrorMessage { get; set; }
             public string Reference { get; set; }
